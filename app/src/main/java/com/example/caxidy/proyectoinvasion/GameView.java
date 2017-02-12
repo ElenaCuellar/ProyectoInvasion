@@ -1,13 +1,11 @@
 package com.example.caxidy.proyectoinvasion;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.support.v7.app.AlertDialog;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -15,13 +13,17 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameView extends SurfaceView {
+public class GameView extends SurfaceView{
     protected HiloGameLoop hiloLoop;
     private List<TempSprite> temps = new ArrayList<TempSprite>();
     private List<Enemigo> enemigos = new ArrayList<Enemigo>();
+    private List<Flecha> flechas = new ArrayList<Flecha>(); //array con los cuatro bitmap de las cuatro posiciones de una flecha
+    protected  Flecha flechaActual;
     protected Personaje personaje;
+    protected BotonFlecha botonFlecha;
+    protected float yBoton, xBoton;
     private long lastClick;
-    protected Bitmap bmpKillEnem,bmpKillPj;
+    protected Bitmap bmpKillEnem,bmpKillPj, bitmapBoton;
     private SoundPool sp;
     protected int sonidoKillEnem = 0;
     protected int sonidoKillPj = 0;
@@ -32,7 +34,7 @@ public class GameView extends SurfaceView {
     public MainActivity contexto;
     public boolean finJuego = false;
 
-    public GameView(Context context) {
+    public GameView(Context context){
         super(context);
 
         contexto = (MainActivity) context;
@@ -44,6 +46,9 @@ public class GameView extends SurfaceView {
         sonidoFuego = sp.load(context,R.raw.bola_fuego,1);
         sonidoHitPj = sp.load(context,R.raw.pj_herido,1);
         sonidoHitEnem = sp.load(context,R.raw.golpe_flecha,1);
+
+        //Bitmap del boton de disparo
+        bitmapBoton = BitmapFactory.decodeResource(getResources(), R.drawable.botondisparo);
 
         hiloLoop = new HiloGameLoop(this);
         getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -68,6 +73,8 @@ public class GameView extends SurfaceView {
             public void surfaceCreated(SurfaceHolder holder) {
                 crearEnemigos();
                 crearPersonaje();
+                crearBotonDisparo();
+                crearFlechas();
                 hiloLoop.setRunning(true);
                 hiloLoop.start();
             }
@@ -106,19 +113,64 @@ public class GameView extends SurfaceView {
         personaje = new Personaje(this,bmp);
     }
 
+    private void crearBotonDisparo(){
+        botonFlecha = new BotonFlecha(this,bitmapBoton);
+    }
+
+    private void crearFlechas(){
+        Bitmap flechadcha = BitmapFactory.decodeResource(getResources(), R.drawable.flechadcha);
+        Flecha flecha1 = new Flecha(this,flechadcha);
+        flechas.add(flecha1);
+        Bitmap flechaizq = BitmapFactory.decodeResource(getResources(), R.drawable.flechaizq);
+        Flecha flecha2 = new Flecha(this,flechaizq);
+        flechas.add(flecha2);
+        Bitmap flechaarr = BitmapFactory.decodeResource(getResources(), R.drawable.flechaarriba);
+        Flecha flecha3 = new Flecha(this,flechaarr);
+        flechas.add(flecha3);
+        Bitmap flechaab = BitmapFactory.decodeResource(getResources(), R.drawable.flechaabajo);
+        Flecha flecha4 = new Flecha(this,flechaab);
+        flechas.add(flecha4);
+    }
+
+    private void crearFuego(){}
+
+    //Se elimina a un enemigo
+    public void matarEnemigo(int pos,int x, int y){
+        if(enemigos.get(pos)!=null)
+            enemigos.remove(pos);
+        //Aparece el sprite temporal
+        temps.add(new TempSprite(temps, this, x, y, bmpKillEnem));
+        //suena el sonido correspondiente
+        sp.play(sonidoKillEnem,1,1,1,0,1.0f);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         //Dibujar el fondo
         canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo),0,0,null);
 
+        //Dibujamos los sprites temporales
         for (int i = temps.size() - 1; i >= 0; i--) {
             temps.get(i).onDraw(canvas);
         }
+        //Dibujamos los enemigos
         for (Enemigo enemigo : enemigos) {
             enemigo.onDraw(canvas);
         }
-        //Dibujamos al personaje
+
+        //Actualizamos la lista de enemigos vivos del personaje
+        personaje.enemigosVivos=enemigos;
+        //...y lo dibujamos
         personaje.onDraw(canvas);
+
+        //Dibujamos el boton de los disparos
+        botonFlecha.onDraw(canvas);
+
+        //Dibujamos la flecha, si la hay
+        if(flechaActual != null && flechaActual.viva)
+            flechaActual.onDraw(canvas);
+        else
+            flechaActual = null;
     }
 
     @Override
@@ -128,11 +180,25 @@ public class GameView extends SurfaceView {
             float x = event.getX();
             float y = event.getY();
 
+            //Se calcula la posicion donde va a estar el boton de disparo, para reservar ese espacio para disparar y no para moverse
+            yBoton = getHeight()-bitmapBoton.getHeight();
+            xBoton = getWidth()-bitmapBoton.getWidth();
+
             synchronized (getHolder()) {
-                //El personaje se mueve en la direccion que hemos tocado
-                personaje.dirX=(int)x;
-                personaje.dirY=(int)y;
-                personaje.movimientoGradual();
+                if(y>=yBoton && x>=xBoton){
+                    //Si hemos pulsado el boton de disparo...disparamos una flecha
+                    flechaActual = flechas.get(personaje.spriteEscogido); //cogemos el sprite de la flecha correcto...
+                    //obtenemos la posicion de personaje, desde donde saldra la flecha, y la direccion que tomara dicha flecha
+                    flechaActual.obtenerPosPj(personaje.x,personaje.y,personaje.spriteEscogido);
+                    //guardamos la lista de enemigos vivos para que si la flecha choca con un enemigo podamos saberlo
+                    flechaActual.enemigosVivos=enemigos;
+                }
+                else {
+                    //Si NO hemos pulsado el boton de disparo...el personaje se mueve en la direccion que hemos tocado
+                    personaje.dirX = x;
+                    personaje.dirY = y;
+                    personaje.movimientoGradual();
+                }
 
                 /*for (int i = enemigos.size() - 1; i >= 0; i--) {
                     Enemigo enemigo = enemigos.get(i);

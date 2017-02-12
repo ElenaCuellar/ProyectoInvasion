@@ -13,8 +13,8 @@ public class Enemigo {
     private static final int BMP_ROWS = 4;
     private static final int BMP_COLUMNS = 3;
     private static final int MAX_SPEED = 5;
-    private int x = 0;
-    private int y = 0;
+    public int x = 0;
+    public int y = 0;
     private int xSpeed = 5;
     private int ySpeed;
     private GameView gameView;
@@ -70,7 +70,8 @@ public class Enemigo {
         return DIRECTION_TO_ANIMATION_MAP[direction];
     }
 
-    public boolean isCollition(float x2, float y2) {
+    //Comprueba si el enemigo ha sido golpeado por una flecha o choca con el personaje
+    public boolean esGolpeado(float x2, float y2) {
         return x2 > x && x2 < x + width && y2 > y && y2 < y + height;
     }
 }
