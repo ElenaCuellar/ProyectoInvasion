@@ -73,8 +73,7 @@ public class Personaje {
         }
         //Si choca con un monstruo...
         if(chocaEnemigo()){
-            //!!resta vida, sonido de golpe, y si vida = 0 sonido kill, sprite kill y fin del juego (en el GameView?)
-            System.out.println("CHOQUE CON ENEMIGO");
+            gameView.quitarVida(x,y);
         }
     }
 
@@ -101,5 +100,9 @@ public class Personaje {
                 return true;
         }
         return false;
+    }
+
+    public boolean esGolpeado(float x2, float y2) {
+        return x2 > x && x2 < x + width && y2 > y && y2 < y + height;
     }
 }

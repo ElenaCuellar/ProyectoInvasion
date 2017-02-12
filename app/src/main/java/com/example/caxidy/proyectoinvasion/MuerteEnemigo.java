@@ -5,15 +5,15 @@ import android.graphics.Canvas;
 
 import java.util.List;
 
-public class TempSprite {
+public class MuerteEnemigo {
     private float x;
     private float y;
     private Bitmap bmp;
     private int life = 15;
-    private List<TempSprite> temps;
+    private List<MuerteEnemigo> temps;
 
-    public TempSprite(List<TempSprite> temps, GameView gameView, float x,
-                      float y, Bitmap bmp) {
+    public MuerteEnemigo(List<MuerteEnemigo> temps, GameView gameView, float x,
+                         float y, Bitmap bmp) {
         this.x = Math.min(Math.max(x - bmp.getWidth() / 2, 0),
                 gameView.getWidth() - bmp.getWidth());
         this.y = Math.min(Math.max(y - bmp.getHeight() / 2, 0),

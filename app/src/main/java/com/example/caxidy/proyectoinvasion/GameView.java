@@ -15,9 +15,11 @@ import java.util.List;
 
 public class GameView extends SurfaceView{
     protected HiloGameLoop hiloLoop;
-    private List<TempSprite> temps = new ArrayList<TempSprite>();
+    Canvas nuestroCanvas;
+    private List<MuerteEnemigo> muEnem = new ArrayList<MuerteEnemigo>();
     private List<Enemigo> enemigos = new ArrayList<Enemigo>();
     private List<Flecha> flechas = new ArrayList<Flecha>(); //array con los cuatro bitmap de las cuatro posiciones de una flecha
+    private List<Fuego> llamas = new ArrayList<Fuego>();
     protected  Flecha flechaActual;
     protected Personaje personaje;
     protected BotonFlecha botonFlecha;
@@ -30,7 +32,6 @@ public class GameView extends SurfaceView{
     protected int sonidoFlecha = 0;
     protected int sonidoFuego = 0;
     protected int sonidoHitPj = 0;
-    protected int sonidoHitEnem = 0;
     public MainActivity contexto;
     public boolean finJuego = false;
 
@@ -45,7 +46,6 @@ public class GameView extends SurfaceView{
         sonidoFlecha = sp.load(context,R.raw.disparo_flecha,1);
         sonidoFuego = sp.load(context,R.raw.bola_fuego,1);
         sonidoHitPj = sp.load(context,R.raw.pj_herido,1);
-        sonidoHitEnem = sp.load(context,R.raw.golpe_flecha,1);
 
         //Bitmap del boton de disparo
         bitmapBoton = BitmapFactory.decodeResource(getResources(), R.drawable.botondisparo);
@@ -71,6 +71,7 @@ public class GameView extends SurfaceView{
 
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
+                crearFuego();
                 crearEnemigos();
                 crearPersonaje();
                 crearBotonDisparo();
@@ -105,7 +106,7 @@ public class GameView extends SurfaceView{
 
     private Enemigo crearEnemigo(int res) {
         Bitmap bmp = BitmapFactory.decodeResource(getResources(), res);
-        return new Enemigo(this,bmp,res);
+        return new Enemigo(this,bmp,res,llamas);
     }
 
     private void crearPersonaje(){
@@ -132,30 +133,65 @@ public class GameView extends SurfaceView{
         flechas.add(flecha4);
     }
 
-    private void crearFuego(){}
+    private void crearFuego(){
+        Bitmap llamaarr = BitmapFactory.decodeResource(getResources(), R.drawable.fuegoarriba);
+        Fuego fu1 = new Fuego(this,llamaarr);
+        llamas.add(fu1);
+        Bitmap llamadcha = BitmapFactory.decodeResource(getResources(), R.drawable.fuegodcha);
+        Fuego fu2 = new Fuego(this,llamadcha);
+        llamas.add(fu2);
+        Bitmap llamaab = BitmapFactory.decodeResource(getResources(), R.drawable.fuegoabajo);
+        Fuego fu3 = new Fuego(this,llamaab);
+        llamas.add(fu3);
+        Bitmap llamaizq = BitmapFactory.decodeResource(getResources(), R.drawable.fuegoizq);
+        Fuego fu4 = new Fuego(this,llamaizq);
+        llamas.add(fu4);
+    }
 
     //Se elimina a un enemigo
     public void matarEnemigo(int pos,int x, int y){
         if(enemigos.get(pos)!=null)
             enemigos.remove(pos);
         //Aparece el sprite temporal
-        temps.add(new TempSprite(temps, this, x, y, bmpKillEnem));
+        muEnem.add(new MuerteEnemigo(muEnem, this, x, y, bmpKillEnem));
         //suena el sonido correspondiente
         sp.play(sonidoKillEnem,1,1,1,0,1.0f);
+    }
+    //Se le quita una vida al personaje
+    public void quitarVida(float x, float y){
+        //!!resta vida, sonido de golpe, y si vida = 0 sonido kill, sprite kill y fin del juego
+        System.out.println("- UNA VIDA....");
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        //Guardamos el canvas para usarlo en otras clases
+        nuestroCanvas = canvas;
         //Dibujar el fondo
         canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo),0,0,null);
 
         //Dibujamos los sprites temporales
-        for (int i = temps.size() - 1; i >= 0; i--) {
-            temps.get(i).onDraw(canvas);
+        for (int i = muEnem.size() - 1; i >= 0; i--) {
+            muEnem.get(i).onDraw(canvas);
         }
         //Dibujamos los enemigos
         for (Enemigo enemigo : enemigos) {
             enemigo.onDraw(canvas);
+            //Dispara fuego si el numero aleatorio que sale es 5
+            if((int)(Math.random()*100+1)==5){
+                enemigo.disparaFuego=true;
+                enemigo.pj=personaje;
+                sp.play(sonidoFuego,1,1,1,0,1.0f);
+            }
+            //!!¿?¿no aparece la llama
+            if(enemigo.disparaFuego){
+                //Dibujamos la llama, si la hay
+                if(enemigo.fuegoActual != null && enemigo.fuegoActual.vivo)
+                    enemigo.fuegoActual.onDraw(canvas);
+                else
+                    enemigo.fuegoActual = null;
+                enemigo.disparaFuego=false;
+            }
         }
 
         //Actualizamos la lista de enemigos vivos del personaje
@@ -192,6 +228,7 @@ public class GameView extends SurfaceView{
                     flechaActual.obtenerPosPj(personaje.x,personaje.y,personaje.spriteEscogido);
                     //guardamos la lista de enemigos vivos para que si la flecha choca con un enemigo podamos saberlo
                     flechaActual.enemigosVivos=enemigos;
+                    sp.play(sonidoFlecha,1,1,1,0,1.0f);
                 }
                 else {
                     //Si NO hemos pulsado el boton de disparo...el personaje se mueve en la direccion que hemos tocado

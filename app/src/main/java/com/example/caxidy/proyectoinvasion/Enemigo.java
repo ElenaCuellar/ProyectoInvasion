@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Enemigo {
@@ -23,11 +25,17 @@ public class Enemigo {
     private int currentFrame = 0;
     private int width;
     private int height;
+    int spriteEscogido=-1;
+    private List<Fuego> llamas = new ArrayList<Fuego>();
+    boolean disparaFuego=false;
+    Fuego fuegoActual;
+    Personaje pj;
 
-    public Enemigo(GameView gameView, Bitmap bmp, int idRec) {
+    public Enemigo(GameView gameView, Bitmap bmp, int idRec,List<Fuego> fuegs) {
         this.gameView = gameView;
         this.bmp = bmp;
         this.idRecurso= idRec;
+        llamas=fuegs;
         this.width = bmp.getWidth() / BMP_COLUMNS;
         this.height = bmp.getHeight() / BMP_ROWS;
         Random rnd = new Random();
@@ -53,6 +61,11 @@ public class Enemigo {
         y += ySpeed;
 
         currentFrame = ++currentFrame % BMP_COLUMNS;
+        if(disparaFuego){
+            fuegoActual=llamas.get(spriteEscogido);
+            fuegoActual.obtenerPosEnemigo(x,y,spriteEscogido);
+            fuegoActual.pj=pj; //si le da al personaje, tiene que perder una vida
+        }
     }
 
     public void onDraw(Canvas canvas) {
@@ -62,12 +75,22 @@ public class Enemigo {
         Rect src = new Rect(srcX, srcY, srcX + width, srcY + height);
         Rect dst = new Rect(x, y, x + width, y + height);
         canvas.drawBitmap(bmp, src, dst, null);
+        //!!pero esto debe ir en el onDraw del gameView porque tiene q ser independiente a la clase del enemigo
+        /*if(disparaFuego){
+            //Dibujamos la llama, si la hay
+            if(fuegoActual != null && fuegoActual.vivo)
+                fuegoActual.onDraw(gameView.nuestroCanvas);
+            else
+                fuegoActual = null;
+            disparaFuego=false;
+        }*/
     }
 
     private int getAnimationRow() {
         double dirDouble = (Math.atan2(xSpeed, ySpeed) / (Math.PI / 2) + 2);
         int direction = (int) Math.round(dirDouble) % BMP_ROWS;
-        return DIRECTION_TO_ANIMATION_MAP[direction];
+        spriteEscogido=DIRECTION_TO_ANIMATION_MAP[direction];
+        return spriteEscogido;
     }
 
     //Comprueba si el enemigo ha sido golpeado por una flecha o choca con el personaje
