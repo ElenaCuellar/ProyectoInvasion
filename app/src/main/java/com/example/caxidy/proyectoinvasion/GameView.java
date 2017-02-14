@@ -72,7 +72,7 @@ public class GameView extends SurfaceView{
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 crearFuego();
-                crearEnemigos();
+                crearEnemigos(15);
                 crearPersonaje();
                 crearBotonDisparo();
                 crearFlechas();
@@ -87,11 +87,11 @@ public class GameView extends SurfaceView{
         bmpKillPj = BitmapFactory.decodeResource(getResources(), R.drawable.killpj);
     }
 
-    private void crearEnemigos() {
+    private void crearEnemigos(int maximo) {
         int enem1 = R.drawable.enemigo1;
         int enem2 = R.drawable.enemigo2;
         int enem3 = R.drawable.enemigo3;
-        int totalEnem = (int)(Math.random()*15+5);
+        int totalEnem = (int)(Math.random()*maximo+5);
         int random;
         for(int b=1;b<=totalEnem;b++) {
             random = (int)(Math.random()*3+1);
@@ -150,12 +150,23 @@ public class GameView extends SurfaceView{
 
     //Se elimina a un enemigo
     public void matarEnemigo(int pos,int x, int y){
-        if(enemigos.get(pos)!=null)
+        if(enemigos.get(pos)!=null) {
+            //sumamos los puntos (enemigo1=100puntos, enemigo2=200puntos y enemigo3=50puntos)
+            if(enemigos.get(pos).idRecurso==R.drawable.enemigo1)
+                personaje.puntuacion += 100;
+            else if(enemigos.get(pos).idRecurso==R.drawable.enemigo2)
+                personaje.puntuacion += 200;
+            else if(enemigos.get(pos).idRecurso==R.drawable.enemigo3)
+                personaje.puntuacion += 50;
+            //lo eliminamos
             enemigos.remove(pos);
+        }
         //Aparece el sprite temporal
         muEnem.add(new MuerteEnemigo(muEnem, this, x, y, bmpKillEnem));
         //suena el sonido correspondiente
         sp.play(sonidoKillEnem,1,1,1,0,1.0f);
+        //Aparecen nuevos enemigos (entre 1 y 4)
+        crearEnemigos(4);
     }
     //Se le quita una vida al personaje
     public void quitarVida(float x, float y){
@@ -181,13 +192,14 @@ public class GameView extends SurfaceView{
             if((int)(Math.random()*100+1)==5){
                 enemigo.disparaFuego=true;
                 enemigo.pj=personaje;
-                sp.play(sonidoFuego,1,1,1,0,1.0f);
             }
             //!!¿?¿no aparece la llama
             if(enemigo.disparaFuego){
                 //Dibujamos la llama, si la hay
-                if(enemigo.fuegoActual != null && enemigo.fuegoActual.vivo)
+                if(enemigo.fuegoActual != null && enemigo.fuegoActual.vivo) {
                     enemigo.fuegoActual.onDraw(canvas);
+                    sp.play(sonidoFuego,1,1,1,0,1.0f);
+                }
                 else
                     enemigo.fuegoActual = null;
                 enemigo.disparaFuego=false;

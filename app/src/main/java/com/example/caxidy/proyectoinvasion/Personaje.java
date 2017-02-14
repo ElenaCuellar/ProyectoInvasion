@@ -20,6 +20,7 @@ public class Personaje {
     public float dirY;
     private GameView gameView;
     private Bitmap bmp;
+    public int puntuacion;
     private int currentFrame = 0;
     private int width;
     private int height;
@@ -34,6 +35,7 @@ public class Personaje {
     public Personaje(GameView gameView, Bitmap bmp) {
         this.gameView = gameView;
         this.bmp = bmp;
+        puntuacion=0;
         this.width = bmp.getWidth() / BMP_COLUMNS;
         this.height = bmp.getHeight() / BMP_ROWS;
         x = 0;
