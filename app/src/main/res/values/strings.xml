@@ -3,7 +3,6 @@
     <string name="col1">Registro</string>
     <string name="col2">Usuario</string>
     <string name="col3">Puntuación</string>
-    <string name="musica">Cambiar musica</string>
     <string name="denuevo">Volver a jugar</string>
     <string name="salir">Salir</string>
 </resources>

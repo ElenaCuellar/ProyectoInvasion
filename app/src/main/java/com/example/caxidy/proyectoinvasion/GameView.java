@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.view.MotionEvent;
@@ -15,17 +18,18 @@ import java.util.List;
 
 public class GameView extends SurfaceView{
     protected HiloGameLoop hiloLoop;
-    Canvas nuestroCanvas;
     private List<MuerteEnemigo> muEnem = new ArrayList<MuerteEnemigo>();
+    public MuertePj muPj = null;
     private List<Enemigo> enemigos = new ArrayList<Enemigo>();
     private List<Flecha> flechas = new ArrayList<Flecha>(); //array con los cuatro bitmap de las cuatro posiciones de una flecha
     private List<Fuego> llamas = new ArrayList<Fuego>();
     protected  Flecha flechaActual;
+    protected Fuego fuegoActual;
     protected Personaje personaje;
     protected BotonFlecha botonFlecha;
     protected float yBoton, xBoton;
     private long lastClick;
-    protected Bitmap bmpKillEnem,bmpKillPj, bitmapBoton;
+    protected Bitmap bmpKillEnem,bmpKillPj, bitmapBoton, bmpVida;
     private SoundPool sp;
     protected int sonidoKillEnem = 0;
     protected int sonidoKillPj = 0;
@@ -34,6 +38,7 @@ public class GameView extends SurfaceView{
     protected int sonidoHitPj = 0;
     public MainActivity contexto;
     public boolean finJuego = false;
+    public List<Vida> vidas = new ArrayList<Vida>();
 
     public GameView(Context context){
         super(context);
@@ -49,6 +54,12 @@ public class GameView extends SurfaceView{
 
         //Bitmap del boton de disparo
         bitmapBoton = BitmapFactory.decodeResource(getResources(), R.drawable.botondisparo);
+        //Bitmap de la vida
+        bmpVida = BitmapFactory.decodeResource(getResources(),R.drawable.vida);
+
+        //Llenamos la lista de vidas con 3 vidas
+        for(int i=1;i<4;i++)
+            vidas.add(new Vida(this,bmpVida));
 
         hiloLoop = new HiloGameLoop(this);
         getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -85,6 +96,7 @@ public class GameView extends SurfaceView{
         });
         bmpKillEnem = BitmapFactory.decodeResource(getResources(), R.drawable.killenemigo);
         bmpKillPj = BitmapFactory.decodeResource(getResources(), R.drawable.killpj);
+
     }
 
     private void crearEnemigos(int maximo) {
@@ -106,7 +118,7 @@ public class GameView extends SurfaceView{
 
     private Enemigo crearEnemigo(int res) {
         Bitmap bmp = BitmapFactory.decodeResource(getResources(), res);
-        return new Enemigo(this,bmp,res,llamas);
+        return new Enemigo(this,bmp,res);
     }
 
     private void crearPersonaje(){
@@ -170,16 +182,71 @@ public class GameView extends SurfaceView{
     }
     //Se le quita una vida al personaje
     public void quitarVida(float x, float y){
-        //!!resta vida, sonido de golpe, y si vida = 0 sonido kill, sprite kill y fin del juego
-        System.out.println("- UNA VIDA....");
+        //Resta vida, si vida = 0 sonido kill, si no (sonido de golpe + sprite kill + fin del juego)
+        boolean vidaRestada=false;
+        int i=2;
+        while(!vidaRestada){
+            if(personaje.vidas[i]) {
+                personaje.vidas[i] = false;
+                //Quitar un corazon de la pantalla
+                vidas.remove(vidas.size()-1);
+                vidaRestada=true;
+                System.out.println("- UNA VIDA....");
+            }
+            i--;
+        }
+        //Si hemos perdido las tres vidas (es decir, la vida en la pos 0 es false, asi que las dos siguientes tambien), se termina la partida
+        if(!personaje.vidas[0]){
+            //Efectos de la muerte del personaje
+            muPj = new MuertePj(this, x, y, bmpKillPj);
+            sp.play(sonidoKillPj,1,1,1,0,1.0f);
+            //!!se termina la partida
+            //!!
+            personaje = null;
+            System.out.println("PARTIDA TERMINADA");
+        }
+        else
+            sp.play(sonidoHitPj,1,1,1,0,1.0f);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        //Guardamos el canvas para usarlo en otras clases
-        nuestroCanvas = canvas;
         //Dibujar el fondo
-        canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo),0,0,null);
+        canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo), 0, 0, null);
+
+        //Dibujamos las vidas
+        for(int i=0;i<vidas.size();i++) {
+            Vida v = vidas.get(i);
+            if(i==0){ //vida dibujada en la posicion mas hacia la esquina
+                v.anchura1 = v.bmp.getWidth();
+                v.anchura2 = 0;
+            }
+            else if(i==1){
+                v.anchura1 = v.bmp.getWidth()*2;
+                v.anchura2 = v.bmp.getWidth();
+            }
+            else{
+                v.anchura1 = v.bmp.getWidth()*3;
+                v.anchura2 = v.bmp.getWidth()*2;
+            }
+            v.onDraw(canvas);
+        }
+
+        //Dibujar la puntuacion
+        if(personaje!=null) {
+            Path path = new Path();
+            //Rectangulo donde estara el texto de la puntuacion
+            path.addRect((float) this.getHeight() / 7, (float) this.getWidth() / 5, (float) this.getHeight() / 7, (float) this.getWidth() / 5, Path.Direction.CCW);
+            Paint pincel = new Paint();
+            pincel.setColor(getResources().getColor(R.color.colorPuntos));
+            pincel.setStrokeWidth(4);
+            pincel.setStyle(Paint.Style.FILL_AND_STROKE);
+            pincel.setTextSize(30);
+            pincel.setTypeface(Typeface.MONOSPACE);
+            //Se dibuja el texto en el canvas: a la misma altura que los corazones de vida y el offset de anchura en mitad de la pantalla
+            canvas.drawTextOnPath(Integer.toString(personaje.puntuacion) + " puntos", path,
+                    getWidth()/2, bmpVida.getHeight(), pincel);
+        }
 
         //Dibujamos los sprites temporales
         for (int i = muEnem.size() - 1; i >= 0; i--) {
@@ -188,42 +255,38 @@ public class GameView extends SurfaceView{
         //Dibujamos los enemigos
         for (Enemigo enemigo : enemigos) {
             enemigo.onDraw(canvas);
-            //Dispara fuego si el numero aleatorio que sale es 5
-            if((int)(Math.random()*100+1)==5){
-                enemigo.disparaFuego=true;
-                enemigo.pj=personaje;
-            }
-            //!!¿?¿no aparece la llama
-            if(enemigo.disparaFuego){
-                //Dibujamos la llama, si la hay
-                if(enemigo.fuegoActual != null && enemigo.fuegoActual.vivo) {
-                    enemigo.fuegoActual.onDraw(canvas);
-                    sp.play(sonidoFuego,1,1,1,0,1.0f);
-                }
-                else
-                    enemigo.fuegoActual = null;
-                enemigo.disparaFuego=false;
-            }
         }
 
-        //Actualizamos la lista de enemigos vivos del personaje
-        personaje.enemigosVivos=enemigos;
-        //...y lo dibujamos
-        personaje.onDraw(canvas);
+        if(personaje!=null) {
+            //Actualizamos la lista de enemigos vivos del personaje
+            personaje.enemigosVivos = enemigos;
+            //...y lo dibujamos
+            personaje.onDraw(canvas);
+        }
 
         //Dibujamos el boton de los disparos
         botonFlecha.onDraw(canvas);
 
         //Dibujamos la flecha, si la hay
-        if(flechaActual != null && flechaActual.viva)
+        if (flechaActual != null && flechaActual.viva)
             flechaActual.onDraw(canvas);
         else
             flechaActual = null;
+
+        //Dibujamos la llama, si la hay
+        if (fuegoActual != null && fuegoActual.vivo)
+            fuegoActual.onDraw(canvas);
+        else
+            fuegoActual=null;
+
+        //Dibujamos el sprite de la muerte del personaje, en caso de que haya muerto
+        if(muPj!=null && !muPj.desaparece)
+            muPj.onDraw(canvas);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (System.currentTimeMillis() - lastClick > 300) {
+        if (personaje!= null && System.currentTimeMillis() - lastClick > 300) {
             lastClick = System.currentTimeMillis();
             float x = event.getX();
             float y = event.getY();
@@ -247,6 +310,17 @@ public class GameView extends SurfaceView{
                     personaje.dirX = x;
                     personaje.dirY = y;
                     personaje.movimientoGradual();
+
+                    //Cada vez que caminamos, puede que un enemigo aleatorio dispare fuego
+                    //Config. del disparo de fuego: dispara una llama si el numero aleatorio que sale es mayor a 5
+                    if ((int) (Math.random() * 100 + 1) > 5) {
+                        int posEnemigo=(int) (Math.random() * (enemigos.size()-1)); //escogemos el enemigo que dispara fuego
+                        fuegoActual=llamas.get(enemigos.get(posEnemigo).spriteEscogido);
+                        fuegoActual.obtenerPosEnemigo(enemigos.get(posEnemigo).x,
+                                enemigos.get(posEnemigo).y, enemigos.get(posEnemigo).spriteEscogido);
+                        fuegoActual.pj = personaje; //si le da al personaje, tiene que perder una vida
+                        sp.play(sonidoFuego, 1, 1, 1, 0, 1.0f);
+                    }
                 }
 
                 /*for (int i = enemigos.size() - 1; i >= 0; i--) {

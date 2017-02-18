@@ -31,6 +31,7 @@ public class Personaje {
     float distancia;
     int spriteEscogido=-1;
     List<Enemigo> enemigosVivos = new ArrayList<>();
+    boolean[] vidas;
 
     public Personaje(GameView gameView, Bitmap bmp) {
         this.gameView = gameView;
@@ -43,6 +44,7 @@ public class Personaje {
         dirX = 0;
         dirY = 0;
         distancia=0;
+        vidas = new boolean[]{true,true,true}; //Vidas del personaje
     }
 
     public void movimientoGradual(){
