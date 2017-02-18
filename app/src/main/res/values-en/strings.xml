@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProyectoInvasion</string>
+    <string name="col1">ID</string>
+    <string name="col2">User</string>
+    <string name="col3">Points</string>
+    <string name="denuevo">New game</string>
+    <string name="musica">Choose song</string>
+    <string name="salir">Exit</string>
+</resources>

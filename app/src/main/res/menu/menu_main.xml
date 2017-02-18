@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.caxidy.otratoolbar.MainActivity">
+    <item
+        android:id="@+id/musica"
+        android:orderInCategory="1"
+        android:title="@string/musica"
+        android:icon="@android:drawable/ic_lock_silent_mode_off"
+        app:showAsAction="always|withText" />
+    <item
+        android:id="@+id/jugardenuevo"
+        android:orderInCategory="2"
+        android:title="@string/denuevo"
+        android:icon="@android:drawable/ic_media_play"
+        app:showAsAction="always|withText" />
+    <item
+        android:id="@+id/salir"
+        android:orderInCategory="3"
+        android:title="@string/salir"
+        android:icon="@android:drawable/ic_delete"
+        app:showAsAction="ifRoom|withText" />
+</menu>
