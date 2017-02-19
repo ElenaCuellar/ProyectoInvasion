@@ -51,7 +51,7 @@ public class BDPuntuacion extends SQLiteOpenHelper {
         if (db != null) {
             String[] campos = {"nombre", "puntuacion"};
             Cursor c = db.query(NOMBRE_TABLA, campos, null, null, null, null,
-                    null, null);
+                    "puntuacion", null);
             if (c.moveToFirst()) {
                 do {
                     puntuacion = new Puntuacion(c.getString(0), c.getInt(1));

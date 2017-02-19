@@ -1,8 +1,5 @@
 <resources>
-    <string name="app_name">ProyectoInvasion</string>
-    <string name="col1">Registro</string>
-    <string name="col2">Usuario</string>
-    <string name="col3">Puntuación</string>
+    <string name="app_name">Invasion</string>
     <string name="denuevo">Volver a jugar</string>
     <string name="salir">Salir</string>
     <string name="titulodiag">Fin del juego</string>
@@ -13,5 +10,10 @@
     <string name="fin2">(toca la pantalla para continuar)</string>
     <string name="diagHint">Introduzca nombre...</string>
     <string name="bderrinsertar">ERROR : No se ha insertado ningun registro</string>
-    <string name="bdinsertar">Registro insertado</string>
+    <string name="bdinsertar">Registro insertado, numero</string>
+    <string name="jugador">Jugador</string>
+    <string name="punt">Puntuacion</string>
+    <string name="diagsalirtitulo">Salir del juego</string>
+    <string name="diagsalirtx">Pulse Aceptar para salir o Cancelar para cerrar esta ventana</string>
+    <string name="cancelar">Cancelar</string>
 </resources>

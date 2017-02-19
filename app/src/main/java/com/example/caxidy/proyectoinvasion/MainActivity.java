@@ -23,6 +23,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Te sales de la actividad principal (y de todas) cuando pulsas la opcion de salir en el menu de ranking
+        if (getIntent().getBooleanExtra("EXIT", false)) {
+            finish();
+        }
+
         gameView=new GameView(this);
         setContentView(gameView);
 
@@ -79,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
                 //Se lanza un intent que muestra el contenido de la tabla  y las opciones de salir o volver a jugar
                 Intent intent = new Intent(MainActivity.this,Ranking.class);
                 startActivity(intent);
+                //Dejar de dibujar en el GameView
+                gameView.finDibujar=true;
             }
         });
 
@@ -95,6 +103,6 @@ public class MainActivity extends AppCompatActivity {
         if (registrosAfec <= 0)
             Toast.makeText(this,getString(R.string.bderrinsertar),Toast.LENGTH_LONG).show();
         else
-            Toast.makeText(this,getString(R.string.bdinsertar)+" (" + registrosAfec + ")", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,getString(R.string.bdinsertar)+" "+ registrosAfec, Toast.LENGTH_LONG).show();
     }
 }

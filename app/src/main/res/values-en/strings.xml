@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ProyectoInvasion</string>
-    <string name="col1">ID</string>
-    <string name="col2">User</string>
-    <string name="col3">Points</string>
     <string name="denuevo">New game</string>
     <string name="salir">Exit</string>
     <string name="aceptar">OK</string>
@@ -14,5 +11,10 @@
     <string name="fin2">(touch the screen to continue)</string>
     <string name="diagHint">Enter a name...</string>
     <string name="bderrinsertar">ERROR: no row was added</string>
-    <string name="bdinsertar">Row added</string>
+    <string name="bdinsertar">Row added, number</string>
+    <string name="jugador">Player</string>
+    <string name="punt">Score</string>
+    <string name="cancelar">Decline</string>
+    <string name="diagsalirtitulo">Exit game</string>
+    <string name="diagsalirtx">Choose OK to exit the game or Decline to close this dialog</string>
 </resources>

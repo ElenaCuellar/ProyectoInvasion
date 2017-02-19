@@ -41,6 +41,7 @@ public class GameView extends SurfaceView{
     public MainActivity contexto;
     public boolean finJuego = false;
     public List<Vida> vidas = new ArrayList<Vida>();
+    public boolean finDibujar = false;
 
     public GameView(Context context){
         super(context);
@@ -164,7 +165,7 @@ public class GameView extends SurfaceView{
 
     //Se elimina a un enemigo
     public void matarEnemigo(int pos,int x, int y){
-        if(enemigos.get(pos)!=null) {
+        if(enemigos.get(pos)!=null && personaje!=null) {
             //sumamos los puntos (enemigo1=100puntos, enemigo2=200puntos y enemigo3=50puntos)
             if(enemigos.get(pos).idRecurso==R.drawable.enemigo1)
                 personaje.puntuacion += 100;
@@ -212,102 +213,102 @@ public class GameView extends SurfaceView{
 
     @Override
     protected void onDraw(Canvas canvas) {
-        //Dibujar el fondo
-        canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo), 0, 0, null);
+        if(!finDibujar) { //...si acaba la partida y sale el intent de ranking, dejamos de dibujar en el GameView
+            //Dibujar el fondo
+            canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.backgroundmazmo), 0, 0, null);
 
-        //Dibujamos las vidas
-        for(int i=0;i<vidas.size();i++) {
-            Vida v = vidas.get(i);
-            if(i==0){ //vida dibujada en la posicion mas hacia la esquina
-                v.anchura1 = v.bmp.getWidth();
-                v.anchura2 = 0;
+            //Dibujamos las vidas
+            for (int i = 0; i < vidas.size(); i++) {
+                Vida v = vidas.get(i);
+                if (i == 0) { //vida dibujada en la posicion mas hacia la esquina
+                    v.anchura1 = v.bmp.getWidth();
+                    v.anchura2 = 0;
+                } else if (i == 1) {
+                    v.anchura1 = v.bmp.getWidth() * 2;
+                    v.anchura2 = v.bmp.getWidth();
+                } else {
+                    v.anchura1 = v.bmp.getWidth() * 3;
+                    v.anchura2 = v.bmp.getWidth() * 2;
+                }
+                v.onDraw(canvas);
             }
-            else if(i==1){
-                v.anchura1 = v.bmp.getWidth()*2;
-                v.anchura2 = v.bmp.getWidth();
+
+            //Dibujar la puntuacion
+            if (personaje != null) {
+                Path path = new Path();
+                //Rectangulo donde estara el texto de la puntuacion
+                path.addRect((float) this.getHeight() / 7, (float) this.getWidth() / 5, (float) this.getHeight() / 7, (float) this.getWidth() / 5, Path.Direction.CCW);
+                Paint pincel = new Paint();
+                pincel.setColor(getResources().getColor(R.color.colorPuntos));
+                pincel.setStrokeWidth(4);
+                pincel.setStyle(Paint.Style.FILL_AND_STROKE);
+                pincel.setTextSize(30);
+                pincel.setTypeface(Typeface.MONOSPACE);
+                //Se dibuja el texto en el canvas: a la misma altura que los corazones de vida y el offset de anchura en mitad de la pantalla
+                canvas.drawTextOnPath(Integer.toString(personaje.puntuacion) + " " + contexto.getString(R.string.puntos), path,
+                        getWidth() / 2, bmpVida.getHeight(), pincel);
             }
-            else{
-                v.anchura1 = v.bmp.getWidth()*3;
-                v.anchura2 = v.bmp.getWidth()*2;
+
+            //Dibujamos los sprites temporales
+            for (int i = muEnem.size() - 1; i >= 0; i--) {
+                muEnem.get(i).onDraw(canvas);
             }
-            v.onDraw(canvas);
-        }
+            //Dibujamos los enemigos
+            for (Enemigo enemigo : enemigos) {
+                enemigo.onDraw(canvas);
+            }
 
-        //Dibujar la puntuacion
-        if(personaje!=null) {
-            Path path = new Path();
-            //Rectangulo donde estara el texto de la puntuacion
-            path.addRect((float) this.getHeight() / 7, (float) this.getWidth() / 5, (float) this.getHeight() / 7, (float) this.getWidth() / 5, Path.Direction.CCW);
-            Paint pincel = new Paint();
-            pincel.setColor(getResources().getColor(R.color.colorPuntos));
-            pincel.setStrokeWidth(4);
-            pincel.setStyle(Paint.Style.FILL_AND_STROKE);
-            pincel.setTextSize(30);
-            pincel.setTypeface(Typeface.MONOSPACE);
-            //Se dibuja el texto en el canvas: a la misma altura que los corazones de vida y el offset de anchura en mitad de la pantalla
-            canvas.drawTextOnPath(Integer.toString(personaje.puntuacion) + " "+contexto.getString(R.string.puntos), path,
-                    getWidth()/2, bmpVida.getHeight(), pincel);
-        }
+            if (personaje != null) {
+                //Actualizamos la lista de enemigos vivos del personaje
+                personaje.enemigosVivos = enemigos;
+                //...y lo dibujamos
+                personaje.onDraw(canvas);
+            }
 
-        //Dibujamos los sprites temporales
-        for (int i = muEnem.size() - 1; i >= 0; i--) {
-            muEnem.get(i).onDraw(canvas);
-        }
-        //Dibujamos los enemigos
-        for (Enemigo enemigo : enemigos) {
-            enemigo.onDraw(canvas);
-        }
+            //Dibujamos el boton de los disparos
+            botonFlecha.onDraw(canvas);
 
-        if(personaje!=null) {
-            //Actualizamos la lista de enemigos vivos del personaje
-            personaje.enemigosVivos = enemigos;
-            //...y lo dibujamos
-            personaje.onDraw(canvas);
-        }
+            //Dibujamos la flecha, si la hay
+            if (flechaActual != null && flechaActual.viva)
+                flechaActual.onDraw(canvas);
+            else
+                flechaActual = null;
 
-        //Dibujamos el boton de los disparos
-        botonFlecha.onDraw(canvas);
+            //Dibujamos la llama, si la hay
+            if (fuegoActual != null && fuegoActual.vivo)
+                fuegoActual.onDraw(canvas);
+            else
+                fuegoActual = null;
 
-        //Dibujamos la flecha, si la hay
-        if (flechaActual != null && flechaActual.viva)
-            flechaActual.onDraw(canvas);
-        else
-            flechaActual = null;
+            //Dibujamos el sprite de la muerte del personaje, en caso de que haya muerto
+            if (muPj != null && !muPj.desaparece)
+                muPj.onDraw(canvas);
 
-        //Dibujamos la llama, si la hay
-        if (fuegoActual != null && fuegoActual.vivo)
-            fuegoActual.onDraw(canvas);
-        else
-            fuegoActual=null;
-
-        //Dibujamos el sprite de la muerte del personaje, en caso de que haya muerto
-        if(muPj!=null && !muPj.desaparece)
-            muPj.onDraw(canvas);
-
-        //Si ha acabado la partida, dibujamos el mensaje FIN DEL JUEGO
-        if(finJuego) {
-            //Primer texto
-            Path pathFin = new Path();
-            pathFin.addRect((float)this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
-            Paint pincel = new Paint();
-            pincel.setColor(getResources().getColor(R.color.colorFin));
-            pincel.setStrokeWidth(4);
-            pincel.setStyle(Paint.Style.FILL_AND_STROKE);
-            pincel.setTextSize(60);
-            pincel.setTypeface(Typeface.MONOSPACE);
-            canvas.drawTextOnPath(contexto.getString(R.string.fin1), pathFin,
-                    getWidth()/5, getHeight()/2, pincel);
-            //Segundo texto
-            Path pathFin2 = new Path();
-            pathFin2.addRect((float)this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
-            Paint pincel2 = new Paint();
-            pincel2.setColor(getResources().getColor(R.color.colorFin2));
-            pincel2.setStrokeWidth(4);
-            pincel2.setStyle(Paint.Style.FILL_AND_STROKE);
-            pincel2.setTextSize(30);
-            pincel2.setTypeface(Typeface.MONOSPACE);
-            canvas.drawTextOnPath(contexto.getString(R.string.fin2), pathFin2,
-                    getWidth()/9, getHeight()/1.6f, pincel2);
+            //Si ha acabado la partida, dibujamos el mensaje FIN DEL JUEGO
+            if (finJuego) {
+                //Primer texto
+                Path pathFin = new Path();
+                pathFin.addRect((float) this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
+                Paint pincel = new Paint();
+                pincel.setColor(getResources().getColor(R.color.colorFin));
+                pincel.setStrokeWidth(4);
+                pincel.setStyle(Paint.Style.FILL_AND_STROKE);
+                pincel.setTextSize(60);
+                pincel.setTypeface(Typeface.MONOSPACE);
+                canvas.drawTextOnPath(contexto.getString(R.string.fin1), pathFin,
+                        getWidth() / 5, getHeight() / 2, pincel);
+                //Segundo texto
+                Path pathFin2 = new Path();
+                pathFin2.addRect((float) this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
+                Paint pincel2 = new Paint();
+                pincel2.setColor(getResources().getColor(R.color.colorFin2));
+                pincel2.setStrokeWidth(4);
+                pincel2.setStyle(Paint.Style.FILL_AND_STROKE);
+                pincel2.setTextSize(30);
+                pincel2.setTypeface(Typeface.MONOSPACE);
+                canvas.drawTextOnPath(contexto.getString(R.string.fin2), pathFin2,
+                        getWidth() / 9, getHeight() / 1.6f, pincel2);
+            }
         }
     }
 
@@ -353,35 +354,6 @@ public class GameView extends SurfaceView{
                     //Al acabar la partida y pulsar: mostrar dialog para introducir un nombre de jugador y ya lanzar el intent del ranking
                     contexto.mostrarDialog();
                 }
-
-
-                /*
-                        //sale un dialog de que has terminado el juego si ya no hay mas bolas
-                        /*if(bolas.size()<=0){
-                            AlertDialog.Builder alertDialogBu = new AlertDialog.Builder(contexto);
-                            alertDialogBu.setTitle(contexto.getString(R.string.titulodiag));
-                            alertDialogBu.setMessage(contexto.getString(R.string.textodiag));
-                            alertDialogBu.setIcon(R.mipmap.ic_launcher);
-                            alertDialogBu.setPositiveButton(contexto.getString(R.string.nuevoj), new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //Se vuelve a empezar el juego
-                                    crearSprites();
-                                }
-                            });
-                            alertDialogBu.setNegativeButton(contexto.getString(R.string.salir), new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    finJuego=true;
-                                    hiloLoop.setRunning(false);
-                                    contexto.finish();
-                                }
-                            });
-
-                            AlertDialog alertDialog = alertDialogBu.create();
-                            alertDialog.setCanceledOnTouchOutside(false);
-                            alertDialog.show();
-                        }
-                        break;
-                }*/
             }
         }
         return true;
