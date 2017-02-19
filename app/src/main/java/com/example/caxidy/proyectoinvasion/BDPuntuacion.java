@@ -14,8 +14,7 @@ public class BDPuntuacion extends SQLiteOpenHelper {
     private static final int VERSION_BASEDATOS = 1;
     private static final String NOMBRE_BASEDATOS = "BD_Puntuacion.db";
     private static final String NOMBRE_TABLA = "Puntuaciones";
-    private static final String ins = "CREATE TABLE Puntuaciones (id INT PRIMARY KEY," +
-            "nombre VARCHAR(100), puntuacion INT)";
+    private static final String ins = "CREATE TABLE Puntuaciones (nombre VARCHAR(100), puntuacion INT)";
 
     public BDPuntuacion(Context context) {
         super(context, NOMBRE_BASEDATOS, null, VERSION_BASEDATOS);
@@ -37,7 +36,6 @@ public class BDPuntuacion extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         if (db != null) {
             ContentValues valores = new ContentValues();
-            valores.put("id", p.getId());
             valores.put("nombre", p.getNombre());
             valores.put("puntuacion", p.getPuntuacion());
             numReg = db.insert(NOMBRE_TABLA, null, valores);
@@ -46,45 +44,17 @@ public class BDPuntuacion extends SQLiteOpenHelper {
         return numReg;
     }
 
-    public long borrar(Puntuacion p) {
-
-        long numReg = -1;
-        SQLiteDatabase db = getWritableDatabase();
-        if (db != null) {
-            numReg = db.delete(NOMBRE_TABLA, "id=" + p.getId(), null);
-        }
-        db.close();
-        return numReg;
-    }
-
-    public Puntuacion consultar(int id) {
-        SQLiteDatabase db = getReadableDatabase();
-        if (db != null) {
-            String[] campos = {"id", "nombre", "puntuacion"};
-            Cursor c = db.query(NOMBRE_TABLA, campos, "id=" + id, null, null,
-                    null, null, null);
-            if(c.getCount() == 0) {
-                puntuacion = new Puntuacion();
-            } else {
-                c.moveToFirst();
-                puntuacion = new Puntuacion(c.getInt(0), c.getString(1), c.getInt(2));
-            }
-            c.close();
-        }
-        db.close();
-        return puntuacion;
-    }
-
+    //devuelve todos los registros
     public ArrayList<Puntuacion> listado() {
         SQLiteDatabase db = getReadableDatabase();
         ArrayList<Puntuacion> listaPunt = new ArrayList<Puntuacion>();
         if (db != null) {
-            String[] campos = {"id", "nombre", "puntuacion"};
+            String[] campos = {"nombre", "puntuacion"};
             Cursor c = db.query(NOMBRE_TABLA, campos, null, null, null, null,
                     null, null);
             if (c.moveToFirst()) {
                 do {
-                    puntuacion = new Puntuacion(c.getInt(0),c.getString(1), c.getInt(2));
+                    puntuacion = new Puntuacion(c.getString(0), c.getInt(1));
                     listaPunt.add(puntuacion);
                 } while (c.moveToNext());
             }

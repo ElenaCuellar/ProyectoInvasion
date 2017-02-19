@@ -5,4 +5,13 @@
     <string name="col3">Puntuación</string>
     <string name="denuevo">Volver a jugar</string>
     <string name="salir">Salir</string>
+    <string name="titulodiag">Fin del juego</string>
+    <string name="textodiag">El juego ha terminado. Introduce tu nombre.</string>
+    <string name="aceptar">Aceptar</string>
+    <string name="puntos">puntos</string>
+    <string name="fin1">Fin del juego</string>
+    <string name="fin2">(toca la pantalla para continuar)</string>
+    <string name="diagHint">Introduzca nombre...</string>
+    <string name="bderrinsertar">ERROR : No se ha insertado ningun registro</string>
+    <string name="bdinsertar">Registro insertado</string>
 </resources>

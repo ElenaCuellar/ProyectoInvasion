@@ -1,6 +1,8 @@
 package com.example.caxidy.proyectoinvasion;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -182,10 +184,10 @@ public class GameView extends SurfaceView{
     }
     //Se le quita una vida al personaje
     public void quitarVida(float x, float y){
-        //Resta vida, si vida = 0 sonido kill, si no (sonido de golpe + sprite kill + fin del juego)
         boolean vidaRestada=false;
-        int i=2;
-        while(!vidaRestada){
+        int i=3;
+        while(!vidaRestada && i>0){
+            i--;
             if(personaje.vidas[i]) {
                 personaje.vidas[i] = false;
                 //Quitar un corazon de la pantalla
@@ -193,16 +195,15 @@ public class GameView extends SurfaceView{
                 vidaRestada=true;
                 System.out.println("- UNA VIDA....");
             }
-            i--;
         }
         //Si hemos perdido las tres vidas (es decir, la vida en la pos 0 es false, asi que las dos siguientes tambien), se termina la partida
         if(!personaje.vidas[0]){
+            contexto.puntosFinales=personaje.puntuacion; //guardamos los puntos del pj para poder guardarlos en la BD
             //Efectos de la muerte del personaje
             muPj = new MuertePj(this, x, y, bmpKillPj);
             sp.play(sonidoKillPj,1,1,1,0,1.0f);
-            //!!se termina la partida
-            //!!
             personaje = null;
+            finJuego=true;
             System.out.println("PARTIDA TERMINADA");
         }
         else
@@ -244,7 +245,7 @@ public class GameView extends SurfaceView{
             pincel.setTextSize(30);
             pincel.setTypeface(Typeface.MONOSPACE);
             //Se dibuja el texto en el canvas: a la misma altura que los corazones de vida y el offset de anchura en mitad de la pantalla
-            canvas.drawTextOnPath(Integer.toString(personaje.puntuacion) + " puntos", path,
+            canvas.drawTextOnPath(Integer.toString(personaje.puntuacion) + " "+contexto.getString(R.string.puntos), path,
                     getWidth()/2, bmpVida.getHeight(), pincel);
         }
 
@@ -282,11 +283,37 @@ public class GameView extends SurfaceView{
         //Dibujamos el sprite de la muerte del personaje, en caso de que haya muerto
         if(muPj!=null && !muPj.desaparece)
             muPj.onDraw(canvas);
+
+        //Si ha acabado la partida, dibujamos el mensaje FIN DEL JUEGO
+        if(finJuego) {
+            //Primer texto
+            Path pathFin = new Path();
+            pathFin.addRect((float)this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
+            Paint pincel = new Paint();
+            pincel.setColor(getResources().getColor(R.color.colorFin));
+            pincel.setStrokeWidth(4);
+            pincel.setStyle(Paint.Style.FILL_AND_STROKE);
+            pincel.setTextSize(60);
+            pincel.setTypeface(Typeface.MONOSPACE);
+            canvas.drawTextOnPath(contexto.getString(R.string.fin1), pathFin,
+                    getWidth()/5, getHeight()/2, pincel);
+            //Segundo texto
+            Path pathFin2 = new Path();
+            pathFin2.addRect((float)this.getHeight() / 4, (float) this.getWidth() / 5, (float) this.getHeight() / 4, (float) this.getWidth() / 5, Path.Direction.CCW);
+            Paint pincel2 = new Paint();
+            pincel2.setColor(getResources().getColor(R.color.colorFin2));
+            pincel2.setStrokeWidth(4);
+            pincel2.setStyle(Paint.Style.FILL_AND_STROKE);
+            pincel2.setTextSize(30);
+            pincel2.setTypeface(Typeface.MONOSPACE);
+            canvas.drawTextOnPath(contexto.getString(R.string.fin2), pathFin2,
+                    getWidth()/9, getHeight()/1.6f, pincel2);
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (personaje!= null && System.currentTimeMillis() - lastClick > 300) {
+        if (System.currentTimeMillis() - lastClick > 300) {
             lastClick = System.currentTimeMillis();
             float x = event.getX();
             float y = event.getY();
@@ -296,7 +323,7 @@ public class GameView extends SurfaceView{
             xBoton = getWidth()-bitmapBoton.getWidth();
 
             synchronized (getHolder()) {
-                if(y>=yBoton && x>=xBoton){
+                if(personaje!= null && y>=yBoton && x>=xBoton){
                     //Si hemos pulsado el boton de disparo...disparamos una flecha
                     flechaActual = flechas.get(personaje.spriteEscogido); //cogemos el sprite de la flecha correcto...
                     //obtenemos la posicion de personaje, desde donde saldra la flecha, y la direccion que tomara dicha flecha
@@ -305,7 +332,7 @@ public class GameView extends SurfaceView{
                     flechaActual.enemigosVivos=enemigos;
                     sp.play(sonidoFlecha,1,1,1,0,1.0f);
                 }
-                else {
+                else if(personaje!= null) {
                     //Si NO hemos pulsado el boton de disparo...el personaje se mueve en la direccion que hemos tocado
                     personaje.dirX = x;
                     personaje.dirY = y;
@@ -322,14 +349,13 @@ public class GameView extends SurfaceView{
                         sp.play(sonidoFuego, 1, 1, 1, 0, 1.0f);
                     }
                 }
+                else if(finJuego){
+                    //Al acabar la partida y pulsar: mostrar dialog para introducir un nombre de jugador y ya lanzar el intent del ranking
+                    contexto.mostrarDialog();
+                }
 
-                /*for (int i = enemigos.size() - 1; i >= 0; i--) {
-                    Enemigo enemigo = enemigos.get(i);
-                    if (enemigo.isCollition(x,y)) {
-                        enemigos.remove(enemigo);
-                        temps.add(new TempSprite(temps, this, x, y, bmpKillEnem));
-                        sp.play(sonidoKillEnem,1,1,1,0,1.0f);
 
+                /*
                         //sale un dialog de que has terminado el juego si ya no hay mas bolas
                         /*if(bolas.size()<=0){
                             AlertDialog.Builder alertDialogBu = new AlertDialog.Builder(contexto);
@@ -355,7 +381,6 @@ public class GameView extends SurfaceView{
                             alertDialog.show();
                         }
                         break;
-                    }
                 }*/
             }
         }

@@ -1,27 +1,17 @@
 package com.example.caxidy.proyectoinvasion;
 
 public class Puntuacion {
-    int id,puntuacion;
+    int puntuacion;
     String nombre;
 
     public Puntuacion(){
-        id=0;
         nombre="";
         puntuacion=-1;
     }
 
-    public Puntuacion(int id, String nombre, int puntuacion){
-        this.id=id;
+    public Puntuacion(String nombre, int puntuacion){
         this.nombre=nombre;
         this.puntuacion=puntuacion;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public int getPuntuacion() {

@@ -6,4 +6,13 @@
     <string name="col3">Points</string>
     <string name="denuevo">New game</string>
     <string name="salir">Exit</string>
+    <string name="aceptar">OK</string>
+    <string name="textodiag">Game finished. Enter your name.</string>
+    <string name="titulodiag">Game finished</string>
+    <string name="puntos">points</string>
+    <string name="fin1">Game finished</string>
+    <string name="fin2">(touch the screen to continue)</string>
+    <string name="diagHint">Enter a name...</string>
+    <string name="bderrinsertar">ERROR: no row was added</string>
+    <string name="bdinsertar">Row added</string>
 </resources>

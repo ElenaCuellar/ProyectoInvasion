@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorPuntos">#FFC107</color>
+    <color name="colorFin">#B71C1C</color>
+    <color name="colorFin2">#D50000</color>
 </resources>
